@@ -300,6 +300,7 @@ module God
           end
         end
 
+        Dir.chdir(ENV['PWD']) if ENV['PWD']
         exec command unless command.empty?
       end
     end
