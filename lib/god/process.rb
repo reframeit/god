@@ -2,7 +2,7 @@ module God
   class Process
     WRITES_PID = [:start, :restart]
     
-    attr_accessor :name, :uid, :gid, :log, :log_cmd, :start, :stop, :restart, :unix_socket, :chroot, :env
+    attr_accessor :name, :uid, :gid, :log, :log_cmd, :start, :stop, :restart, :unix_socket, :chroot, :env, :cwd
     
     def initialize
       self.log = '/dev/null'
@@ -119,6 +119,15 @@ module God
         if !File.exist?(File.join(self.chroot, '/dev/null'))
           valid = false
           LOG.log(self, :error, "CHROOT directory '#{self.chroot}' does not contain '/dev/null'")
+        end
+      end
+      
+      # new working directory must exist (relative to chroot, if specified)
+      if self.cwd
+        cwd = self.chroot ? File.join(self.chroot, self.cwd) : self.cwd
+        if !File.directory?(cwd)
+          valid = false
+          LOG.log(self, :error, "CWD directory '#{cwd}' does not exist")
         end
       end
       
@@ -281,7 +290,15 @@ module God
         ::Process.groups = [gid_num] if self.gid
         ::Process::Sys.setgid(gid_num) if self.gid
         ::Process::Sys.setuid(uid_num) if self.uid
-        Dir.chdir "/"
+
+        if self.cwd
+          Dir.chdir self.cwd
+          ENV['PWD'] = self.cwd
+        else
+          Dir.chdir '/'
+          ENV['PWD'] = '/'
+        end
+
         $0 = command
         STDIN.reopen "/dev/null"
         if self.log_cmd
@@ -300,7 +317,6 @@ module God
           end
         end
 
-        Dir.chdir(ENV['PWD']) if ENV['PWD']
         exec command unless command.empty?
       end
     end

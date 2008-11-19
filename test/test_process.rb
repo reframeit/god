@@ -101,7 +101,60 @@ class TestProcessChild < Test::Unit::TestCase
 
     assert @p.valid?
   end
-  
+
+  def test_valid_should_return_false_with_bogus_cwd
+    @p.start = 'qux'
+    @p.cwd = '/boguscwd'
+    
+    no_stdout do
+      no_stderr do
+        assert !@p.valid?
+      end
+    end
+  end
+
+  def test_valid_should_return_false_with_valid_chroot_and_bogus_cwd
+    @p.start = 'qux'
+    @p.chroot = '/tmp'
+    @p.cwd = '/boguscwd'
+    @p.log = '/tmp/foo.log'
+
+    File.expects(:directory?).with('/tmp').returns(true)
+    File.expects(:exist?).with('/tmp/foo.log').returns(true)
+    File.expects(:exist?).with('/tmp/dev/null').returns(true)
+
+    no_stdout do
+      no_stderr do
+        assert !@p.valid?
+      end
+    end
+  end
+
+  def test_valid_should_return_true_with_valid_cwd
+    @p.start = 'qux'
+    @p.cwd = '/tmp'
+    @p.log = '/tmp/foo.log'
+
+    File.expects(:directory?).with('/tmp').returns(true)
+    File.expects(:exist?).with('/tmp/foo.log').returns(true)
+
+    assert @p.valid?
+  end
+
+  def test_valid_should_return_true_with_chroot_and_valid_cwd
+    @p.start = 'qux'
+    @p.chroot = '/tmp'
+    @p.cwd = '/cwd'
+    @p.log = '/tmp/foo.log'
+
+    File.expects(:exist?).with('/tmp').returns(true)
+    File.expects(:directory?).with('/tmp/cwd').returns(true)
+    File.expects(:exist?).with('/tmp/foo.log').returns(true)
+    File.expects(:exist?).with('/tmp/dev/null').returns(true)
+
+    assert @p.valid?
+  end
+
   # call_action
   
   def test_call_action_should_write_pid
