@@ -1,0 +1,23 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+	use logger
+}
+
+start() {
+	ebegin "Starting ${SVCNAME}"
+
+	god --no-syslog
+	
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping ${SVCNAME}"
+
+	god terminate
+
+	eend $?
+}
+
