@@ -5,8 +5,22 @@ depend() {
 	use logger
 }
 
+checkconfig() {
+  if [ -z "$GOD_ENV_DIR" ] ; then
+     eerror "You must specify GOD_ENV_DIR"
+     return 1
+  fi
+
+  if [ ! -d "$GOD_ENV_DIR" ] ; then
+     eerror "GOD_ENV_DIR must be a valid directory"
+     return 1
+  fi
+}
+
 start() {
 	ebegin "Starting ${SVCNAME}"
+
+	checkconfig || return 1
 
 	god --no-syslog
 	

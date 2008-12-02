@@ -1,0 +1,34 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+	need god
+	use logger
+}
+
+checkconfig() {
+  if [ -z "$GOD_APP" ] ; then
+    eerror "You must specify GOD_APP, the app to start/stop with this script"
+    return 1
+  fi
+}
+
+start() {
+	ebegin "Starting ${SVCNAME}"
+
+	checkconfig || return 1
+
+	god load $GOD_CONFIG
+
+   	eend $?
+}
+
+stop() {
+	ebegin "Stopping ${SVCNAME}"
+
+	god stop $GOD_APP
+	god remove $GOD_APP
+	
+	eend $?
+}
+
